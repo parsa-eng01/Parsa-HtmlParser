@@ -24,6 +24,24 @@ namespace HtmlParser.Tools
 
         private string _file;
         private int _readerPosition;
+        private readonly string[] EmptyTags =
+        {
+            "area",
+            "base",
+            "br",
+            "col",
+            "embed",
+            "hr",
+            "img",
+            "input",
+            "keygen",
+            "link",
+            "meta",
+            "param",
+            "source",
+            "track",
+            "wbr"
+        };
 
 
         public HtmlDocument Read()
@@ -86,6 +104,7 @@ namespace HtmlParser.Tools
                                 head = new HtmlHead();
                             if (htmlBuffer.ToLower().StartsWith("<title"))
                                 isTitle = true;
+                            htmlBuffer = string.Empty;
                             readElement = ReadElement.None;
                         }
                         if (chr == '/')
@@ -98,7 +117,10 @@ namespace HtmlParser.Tools
                         if (chr == '>')
                         {
                             if (htmlBuffer.ToLower() == "</head>")
+                            {
+                                _readerPosition++;
                                 return head;
+                            }
                             htmlBuffer = string.Empty;
                             readElement = ReadElement.None;
                         }
@@ -110,9 +132,9 @@ namespace HtmlParser.Tools
                             if (isTitle)
                             {
                                 isTitle = false;
-                                head.Title = htmlBuffer;
+                                head.Title = htmlBuffer.Remove(htmlBuffer.Length - 1);
                             }
-                            htmlBuffer = string.Empty;
+                            htmlBuffer = "<";
                             readElement = ReadElement.Tag;
                         }
                         break;
@@ -124,10 +146,9 @@ namespace HtmlParser.Tools
 
         private HtmlBody ParseBody(string htmlString)
         {
-            HtmlBody body = null;
             var readElement = ReadElement.None;
             var htmlBuffer = string.Empty;
-            var openTags = new Stack<string>();
+            var openTags = new List<HtmlNode>();
 
             for (; _readerPosition < htmlString.Length; _readerPosition++)
             {
@@ -150,23 +171,39 @@ namespace HtmlParser.Tools
                         htmlBuffer += chr.ToString();
                         if (chr == '>')
                         {
-                            if (htmlBuffer.ToLower().StartsWith("<head"))
-                                head = new HtmlHead();
-                            if (htmlBuffer.ToLower().StartsWith("<title"))
-                                isTitle = true;
+                            if (!htmlBuffer.StartsWith("<!--"))
+                            {
+                                if (htmlBuffer.Contains("img"))
+                                    htmlBuffer = htmlBuffer;
+                                var node = new HtmlNode(htmlBuffer);
+                                openTags = CheckUnclosedTags(node, openTags);
+                                if (node.TagName == "body")
+                                    openTags.Add(new HtmlBody(htmlBuffer));
+                                else
+                                {
+                                    openTags.LastOrDefault()?.Content.Add(node);
+                                    if (!node.IsClosed)
+                                        openTags.Add(node);
+                                }
+                            }
+                            htmlBuffer = string.Empty;
                             readElement = ReadElement.None;
                         }
                         if (chr == '/')
-                        {
                             readElement = ReadElement.ClosedTag;
-                        }
                         break;
                     case ReadElement.ClosedTag:
                         htmlBuffer += chr.ToString();
                         if (chr == '>')
                         {
-                            if (htmlBuffer.ToLower() == "</head>")
-                                return head;
+                            var tagName = htmlBuffer.Replace("</", "").Replace(">", "");
+                            var node = openTags.Last(t => t.TagName == tagName && !t.IsClosed);
+                            node.IsClosed = true;
+
+                            if (htmlBuffer.ToLower() == "</body>")
+                                return openTags.First(t => t is HtmlBody) as HtmlBody;
+
+                            openTags.Remove(node);
                             htmlBuffer = string.Empty;
                             readElement = ReadElement.None;
                         }
@@ -175,24 +212,40 @@ namespace HtmlParser.Tools
                         htmlBuffer += chr.ToString();
                         if (chr == '<')
                         {
-                            if (isTitle)
-                            {
-                                isTitle = false;
-                                head.Title = htmlBuffer;
-                            }
-                            htmlBuffer = string.Empty;
+                            var node = new PlainText(htmlBuffer.Remove(htmlBuffer.Length - 1));
+                            openTags.Last(t => !t.IsClosed).Content.Add(node);
+                            htmlBuffer = "<";
                             readElement = ReadElement.Tag;
                         }
                         break;
                 }
+                if (openTags.FirstOrDefault(t => t is HtmlBody)?.IsClosed == true)
+                    break;
             }
 
-            return body;
+            return openTags.First(t => t is HtmlBody) as HtmlBody;
+        }
+
+        private List<HtmlNode> CheckUnclosedTags(HtmlNode node, List<HtmlNode> openTags)
+        {
+            node.IsClosed = EmptyTags.Any(e => e == node.TagName);
+
+            if (node.TagName == "tr")
+                if (openTags.Any(t => (t.TagName == "tr" || t.TagName == "td") && !t.IsClosed))
+                    openTags
+                        .Where(t => (t.TagName == "tr" || t.TagName == "td") && !t.IsClosed)
+                        .ToList()
+                        .ForEach(t => t.IsClosed = true);
+
+            if (openTags.Any(t => t.IsClosed))
+                openTags.Remove(openTags.Last(t => t.IsClosed));
+
+            return openTags;
         }
 
         private bool IsHtmlDocument(string htmlString)
         {
-            if (!htmlString.TrimStart().StartsWith("<!DOCTYPE"))
+            if (!htmlString.TrimStart().ToUpper().StartsWith("<!DOCTYPE"))
                 return false;
 
             _readerPosition = htmlString.IndexOf(">") + 1;

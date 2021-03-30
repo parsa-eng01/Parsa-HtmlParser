@@ -12,5 +12,9 @@ namespace HtmlParser
         {
             return true;
         }
+
+
+        public override string ToString()
+            => string.IsNullOrEmpty(Title) ? "No title" : Title;
     }
 }

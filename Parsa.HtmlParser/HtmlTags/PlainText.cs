@@ -8,7 +8,11 @@ namespace HtmlParser.HtmlTags
     {
         public PlainText(string htmlTag) : base(htmlTag)
         {
-            TagName = "Plain Text";
+            _tagName = "Plain Text";
+            IsClosed = true;
         }
+
+        public override string InnerHtml => _htmlTag;
+        public override string InnerText => _htmlTag;
     }
 }

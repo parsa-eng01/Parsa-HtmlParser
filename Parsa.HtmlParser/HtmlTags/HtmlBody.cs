@@ -8,7 +8,7 @@ namespace HtmlParser.HtmlTags
     {
         public HtmlBody(string htmlTag) : base(htmlTag)
         {
-            TagName = "body";
+            _tagName = "body";
         }
     }
 }

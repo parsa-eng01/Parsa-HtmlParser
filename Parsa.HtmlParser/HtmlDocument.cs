@@ -18,6 +18,6 @@ namespace HtmlParser
             => Body.GetElementById(id);
 
         public override string ToString()
-            => string.IsNullOrEmpty(Head?.Title) ? "without title" : Head.Title;
+            => Head.Title;
     }
 }
