@@ -28,11 +28,8 @@ namespace Parsa.HtmlParser
             set => _attributes[attribute] = value;
         }
 
-        public void Remove(string attribute)
-        {
-            if (_attributes.ContainsKey(attribute))
-                _attributes.Remove(attribute);
-        }
+        public bool Remove(string attribute)
+            => _attributes.Remove(attribute);
 
         private Dictionary<string, string> GetAttributes(string attributeStr)
         {

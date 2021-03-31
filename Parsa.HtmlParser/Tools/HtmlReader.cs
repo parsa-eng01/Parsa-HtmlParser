@@ -1,4 +1,5 @@
 ﻿using HtmlParser.HtmlTags;
+using Parsa.HtmlParser;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -24,24 +25,6 @@ namespace HtmlParser.Tools
 
         private string _file;
         private int _readerPosition;
-        private readonly string[] EmptyTags =
-        {
-            "area",
-            "base",
-            "br",
-            "col",
-            "embed",
-            "hr",
-            "img",
-            "input",
-            "keygen",
-            "link",
-            "meta",
-            "param",
-            "source",
-            "track",
-            "wbr"
-        };
 
 
         public HtmlDocument Read()
@@ -228,17 +211,25 @@ namespace HtmlParser.Tools
 
         private List<HtmlNode> CheckUnclosedTags(HtmlNode node, List<HtmlNode> openTags)
         {
-            node.IsClosed = EmptyTags.Any(e => e == node.TagName);
+            node.IsClosed = HtmlCondition.EmptyTags.Any(e => e == node.TagName);
 
-            if (node.TagName == "tr")
-                if (openTags.Any(t => (t.TagName == "tr" || t.TagName == "td") && !t.IsClosed))
+            if (HtmlCondition.ParentChildTags.Any(cl => cl.Any(el => el == node.TagName))) 
+            {
+                var collection = HtmlCondition.ParentChildTags.First(cl => cl.Any(el => el == node.TagName)).ToList();
+                var index = collection.IndexOf(node.TagName);
+                if (openTags.Any(t => collection.Any(c => c == t.TagName) && collection.IndexOf(t.TagName) >= index && !t.IsClosed)) 
                     openTags
-                        .Where(t => (t.TagName == "tr" || t.TagName == "td") && !t.IsClosed)
+                        .Where(t => collection.Any(c => c == t.TagName) && collection.IndexOf(t.TagName) >= index && !t.IsClosed)
                         .ToList()
                         .ForEach(t => t.IsClosed = true);
+            }
 
             if (openTags.Any(t => t.IsClosed))
-                openTags.Remove(openTags.Last(t => t.IsClosed));
+            {
+                var closedTags = openTags.Where(t => t.IsClosed).ToList();
+                for (var i = 0; i < closedTags.Count; i++)
+                    openTags.Remove(closedTags[i]); 
+            }
 
             return openTags;
         }

@@ -46,6 +46,8 @@ namespace HtmlParser
             }
         }
 
+        public bool Remove(string element)
+            => _style.Remove(element);
 
 
         public override string ToString()

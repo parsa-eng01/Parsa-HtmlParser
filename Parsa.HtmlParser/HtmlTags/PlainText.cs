@@ -12,7 +12,7 @@ namespace HtmlParser.HtmlTags
             IsClosed = true;
         }
 
-        public override string InnerHtml => _htmlTag;
-        public override string InnerText => _htmlTag;
+        public override string InnerHtml() => _htmlTag;
+        public override string InnerText() => _htmlTag;
     }
 }

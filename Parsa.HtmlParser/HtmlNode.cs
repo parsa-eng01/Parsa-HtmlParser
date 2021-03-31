@@ -26,34 +26,45 @@ namespace HtmlParser
             if (string.IsNullOrEmpty(tag))
                 throw new ArgumentException("html tag is not valid");
 
-            Initial(htmlTag, tag);
+            _tagName = tag;
         }
 
         protected string _htmlTag;
         protected string _tagName;
 
-        public string TagName => _tagName;
-        public string Id 
+        private Lazy<HtmlAttributes> _attributes;
+        private Lazy<HtmlStyle> _style;
+
+        public string Id
         {
             get => Attributes["id"];
             protected set => Attributes["id"] = value;
         }
-        public virtual string InnerHtml =>
-            $"{Build()}\r\n  {InnerText}\r\n</{_tagName}>";
-        public virtual string InnerText {
-            get 
-            {
-                if (!_htmlTag.StartsWith("<"))
-                    return _htmlTag;
-
-                return Content != null ? string.Join("\r\n  ", Content.Select(c => c.InnerHtml)) : string.Empty;
-            }
-        }
+        public string TagName => _tagName;
         public bool IsClosed { get; set; }
         public List<HtmlNode> Content { get; set; } = new List<HtmlNode>();
-        public HtmlAttributes Attributes { get; set; } 
-        public HtmlStyle Style { get; set; }
+        public HtmlAttributes Attributes =>
+            _attributes?.Value ??
+            (_attributes = new Lazy<HtmlAttributes>(() =>
+            {
+                return new HtmlAttributes(_htmlTag.Remove(0, _tagName.Length + 1).Replace(">", "").Trim());
+            })).Value;
+        public HtmlStyle Style =>
+            _style?.Value ?? (_style = new Lazy<HtmlStyle>(() =>
+            {
+                return new HtmlStyle(Attributes["style"]);
+            })).Value;
 
+        public virtual string InnerHtml() =>
+            HtmlCondition.EmptyTags.Any(t => t == _tagName) ? Build() : $"{Build()}\r\n  {InnerText()}\r\n</{_tagName}>";
+
+        public virtual string InnerText()
+        {
+            if (!_htmlTag.StartsWith("<"))
+                return _htmlTag;
+
+            return Content != null ? string.Join("\r\n  ", Content.Select(c => c.InnerHtml())) : string.Empty;
+        }
 
         public HtmlNode GetElementById(string id)
         {
@@ -82,21 +93,14 @@ namespace HtmlParser
             return true;
         }
 
-
-        private Task Initial(string htmlTag, string tag)
-        {
-            _tagName = tag;
-            Attributes = new HtmlAttributes(htmlTag.Remove(0, tag.Length + 1).Replace(">", "").Trim());
-            Style = new HtmlStyle(Attributes["style"]);
-            
-            return Task.CompletedTask;
-        }
-
         private string Build()
         {
             Attributes["style"] = Style.ToString();
             if (string.IsNullOrEmpty(Attributes["style"]))
                 Attributes.Remove("style");
+            
+            if (string.IsNullOrEmpty(Attributes.ToString()))
+                return $"<{TagName}>";
 
             return $"<{TagName} {Attributes}>";
         }
@@ -105,6 +109,6 @@ namespace HtmlParser
 
 
         public override string ToString()
-            => _tagName;
+            => _tagName + (!string.IsNullOrEmpty(Id) ? $" id={Id}" : "");
     }
 }
