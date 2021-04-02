@@ -27,9 +27,5 @@ namespace Parsa.HtmlParser
             "wbr"
         };
 
-        public static readonly IReadOnlyList<IReadOnlyList<string>> ParentChildTags = new string[][]
-        {
-            new string[] {"table","tr","td" },
-        };
     }
 }

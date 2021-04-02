@@ -2,16 +2,16 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace HtmlParser
+namespace Parsa.HtmlParser
 {
-    public class HtmlHead
+    public class HtmlHead : HtmlNode
     {
-        public string Title { get; set; }
-
-        public bool IsValid()
+        public HtmlHead(string htmlTag) : base(htmlTag)
         {
-            return true;
         }
+
+        public string Title => Content["title"]?.InnerText;
+
 
 
         public override string ToString()

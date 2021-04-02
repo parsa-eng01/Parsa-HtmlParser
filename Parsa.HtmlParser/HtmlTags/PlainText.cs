@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Parsa.HtmlParser;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -12,7 +13,7 @@ namespace HtmlParser.HtmlTags
             IsClosed = true;
         }
 
-        public override string InnerHtml() => _htmlTag;
-        public override string InnerText() => _htmlTag;
+        public override string InnerHtml => _htmlTag;
+        public override string InnerText => _htmlTag;
     }
 }

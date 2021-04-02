@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace HtmlParser.HtmlTags
+namespace Parsa.HtmlParser.HtmlTags
 {
     public class HtmlBody : HtmlNode
     {

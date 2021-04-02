@@ -1,5 +1,5 @@
-﻿using HtmlParser;
-using HtmlParser.Tools;
+﻿using Parsa.HtmlParser;
+using Parsa.HtmlParser.Tools;
 using System;
 using System.Collections.Generic;
 using System.Linq;

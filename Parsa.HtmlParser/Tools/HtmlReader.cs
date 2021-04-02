@@ -1,12 +1,13 @@
-﻿using HtmlParser.HtmlTags;
+﻿using Parsa.HtmlParser.HtmlTags;
 using Parsa.HtmlParser;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using HtmlParser.HtmlTags;
 
-namespace HtmlParser.Tools
+namespace Parsa.HtmlParser.Tools
 {
     public class HtmlReader
     {
@@ -154,20 +155,17 @@ namespace HtmlParser.Tools
                         htmlBuffer += chr.ToString();
                         if (chr == '>')
                         {
-                            if (!htmlBuffer.StartsWith("<!--"))
+                            var node = new HtmlNode(htmlBuffer);
+                            node.IsClosed = HtmlCondition.EmptyTags.Any(e => e == node.TagName);
+                            if (node.TagName == "body")
+                                openTags.Add(new HtmlBody(htmlBuffer));
+                            else if (htmlBuffer.StartsWith("<!--"))
+                                openTags.LastOrDefault()?.Content.Add(new Comment(htmlBuffer));
+                            else
                             {
-                                if (htmlBuffer.Contains("img"))
-                                    htmlBuffer = htmlBuffer;
-                                var node = new HtmlNode(htmlBuffer);
-                                openTags = CheckUnclosedTags(node, openTags);
-                                if (node.TagName == "body")
-                                    openTags.Add(new HtmlBody(htmlBuffer));
-                                else
-                                {
-                                    openTags.LastOrDefault()?.Content.Add(node);
-                                    if (!node.IsClosed)
-                                        openTags.Add(node);
-                                }
+                                AddToParentContent(openTags, node);
+                                if (!node.IsClosed)
+                                    openTags.Add(node);
                             }
                             htmlBuffer = string.Empty;
                             readElement = ReadElement.None;
@@ -182,11 +180,10 @@ namespace HtmlParser.Tools
                             var tagName = htmlBuffer.Replace("</", "").Replace(">", "");
                             var node = openTags.Last(t => t.TagName == tagName && !t.IsClosed);
                             node.IsClosed = true;
+                            CheckUnclosedTags(openTags);
 
-                            if (htmlBuffer.ToLower() == "</body>")
-                                return openTags.First(t => t is HtmlBody) as HtmlBody;
-
-                            openTags.Remove(node);
+                            if (node is HtmlBody)
+                                return node as HtmlBody;
                             htmlBuffer = string.Empty;
                             readElement = ReadElement.None;
                         }
@@ -196,7 +193,7 @@ namespace HtmlParser.Tools
                         if (chr == '<')
                         {
                             var node = new PlainText(htmlBuffer.Remove(htmlBuffer.Length - 1));
-                            openTags.Last(t => !t.IsClosed).Content.Add(node);
+                            openTags.Last().Content.Add(node);
                             htmlBuffer = "<";
                             readElement = ReadElement.Tag;
                         }
@@ -209,27 +206,58 @@ namespace HtmlParser.Tools
             return openTags.First(t => t is HtmlBody) as HtmlBody;
         }
 
-        private List<HtmlNode> CheckUnclosedTags(HtmlNode node, List<HtmlNode> openTags)
+        private void AddToParentContent(List<HtmlNode> openTags, HtmlNode node)
         {
-            node.IsClosed = HtmlCondition.EmptyTags.Any(e => e == node.TagName);
+            var lastNode = openTags.LastOrDefault();
+            if (lastNode == null)
+                return;
 
-            if (HtmlCondition.ParentChildTags.Any(cl => cl.Any(el => el == node.TagName))) 
+            var parents = new string[] { };
+            if (node.TagName == "tr")
+                parents = new string[] { "table", "tbody", "thead", "tfoot" };
+
+            if (node.TagName == "td")
+                parents = new string[] { "tr", "th" };
+
+            if (new string[] { "tbody", "thead", "tfoot" }.Any(t => t == node.TagName))
+                parents = new string[] { "table" };
+
+            if (node.TagName == "il")
+                parents = new string[] { "ol", "ul", "menu" };
+
+            if (!parents.Any())
             {
-                var collection = HtmlCondition.ParentChildTags.First(cl => cl.Any(el => el == node.TagName)).ToList();
-                var index = collection.IndexOf(node.TagName);
-                if (openTags.Any(t => collection.Any(c => c == t.TagName) && collection.IndexOf(t.TagName) >= index && !t.IsClosed)) 
-                    openTags
-                        .Where(t => collection.Any(c => c == t.TagName) && collection.IndexOf(t.TagName) >= index && !t.IsClosed)
-                        .ToList()
-                        .ForEach(t => t.IsClosed = true);
+                lastNode.Content.Add(node);
+                return;
             }
 
-            if (openTags.Any(t => t.IsClosed))
+            for (int i = openTags.Count - 1; i > -1; i--)
             {
-                var closedTags = openTags.Where(t => t.IsClosed).ToList();
-                for (var i = 0; i < closedTags.Count; i++)
-                    openTags.Remove(closedTags[i]); 
+                if (parents.Any(t => t == openTags[i].TagName))
+                {
+                    openTags[i].Content.Add(node);
+                    return;
+                }
             }
+        }
+
+        private List<HtmlNode> CheckUnclosedTags(List<HtmlNode> openTags)
+        {
+            if (openTags.LastOrDefault()?.IsClosed != false)
+            {
+                openTags.Remove(openTags.Last());
+                return openTags;
+            }
+
+            var closedNode = openTags.Last(t => t.IsClosed);
+            if (openTags.Last().Content.Count > 1)
+            {
+                var contents = openTags.Last().Content.Skip(1).ToList();
+                openTags.Last().Content.RemoveRange(1, contents.Count);
+                closedNode.Content.AddRange(contents);
+            }
+            var index = openTags.IndexOf(closedNode);
+            openTags.RemoveRange(index, openTags.Count - index);
 
             return openTags;
         }

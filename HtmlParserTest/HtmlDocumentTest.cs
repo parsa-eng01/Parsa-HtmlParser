@@ -1,4 +1,4 @@
-using HtmlParser;
+using Parsa.HtmlParser;
 using Parsa.HtmlParser.Extensions;
 using System;
 using System.IO;
@@ -21,8 +21,16 @@ namespace HtmlParserTest
             var doc = new HtmlDocument();
             doc.LoadFromFile(HtmlFiles.First());
 
-            Assert.True(doc.Body.Content.Count > 0);
-            Assert.True(doc.IsValid());
+            Assert.True(doc.Body.Content[0].Content.Count == 8);
+        }
+
+        [Fact]
+        public void LoadFromFile1x()
+        {
+            var doc = new HtmlAgilityPack.HtmlDocument();
+            doc.Load(HtmlFiles.First());
+
+            Assert.True(doc.DocumentNode.ChildNodes.Count > 0);
         }
 
         [Fact]
@@ -32,7 +40,8 @@ namespace HtmlParserTest
             doc.LoadFromFile(HtmlFiles.Last());
 
             Assert.True(doc.Body.Content.Count > 0);
-            Assert.True(doc.IsValid());
         }
+
+
     }
 }

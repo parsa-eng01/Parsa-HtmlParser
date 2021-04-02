@@ -1,10 +1,10 @@
-﻿using HtmlParser.HtmlTags;
+﻿using Parsa.HtmlParser.HtmlTags;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace HtmlParser
+namespace Parsa.HtmlParser
 {
     public class HtmlDocument
     {
