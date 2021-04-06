@@ -7,26 +7,27 @@ using System.Threading.Tasks;
 
 namespace Parsa.HtmlParser
 {
-    public class HtmlNode
+    public class HtmlNode : IHtmlNode
     {
         public HtmlNode(string htmlTag)
         {
-            _htmlTag = htmlTag.Trim();
-
-            if (!string.IsNullOrEmpty(_tagName) || !htmlTag.StartsWith("<") || htmlTag.StartsWith("<!--"))
+            if (htmlTag?.StartsWith("<") != true)
+                return;
+            if (htmlTag.StartsWith("<!--"))
                 return;
 
             var tag = htmlTag
-                .Replace("<", "")
-                .Replace(">", "")
-                .Trim()
+                .Remove(htmlTag.Length - 1)
+                .Remove(0, 1)
                 .Split(' ')[0]
                 .ToLower();
 
-            if (string.IsNullOrEmpty(tag))
+            if (tag.Length == 0)
                 throw new ArgumentException("html tag is not valid");
 
+            Content = new HtmlContent();
             _tagName = tag;
+            _htmlTag = htmlTag;
         }
 
         protected string _htmlTag;
@@ -37,12 +38,12 @@ namespace Parsa.HtmlParser
 
         public string Id
         {
-            get => Attributes["id"];
-            protected set => Attributes["id"] = value;
+            get => Attributes.ContainsKey("id") ? Attributes["id"] : null;
+            set => Attributes["id"] = value;
         }
         public string TagName => _tagName;
         public bool IsClosed { get; set; }
-        public HtmlContent Content { get; set; } = new HtmlContent();
+        public HtmlContent Content { get; set; }
         public HtmlAttributes Attributes =>
             _attributes?.Value ??
             (_attributes = new Lazy<HtmlAttributes>(() =>
@@ -52,21 +53,57 @@ namespace Parsa.HtmlParser
         public HtmlStyle Style =>
             _style?.Value ?? (_style = new Lazy<HtmlStyle>(() =>
             {
-                return new HtmlStyle(Attributes["style"]);
+                return new HtmlStyle(Attributes.ContainsKey("style") ? Attributes["style"] : null);
             })).Value;
 
         public virtual string InnerHtml =>
             HtmlCondition.EmptyTags.Any(t => t == _tagName) ? Build() : $"{Build()}\r\n  {InnerText}\r\n</{_tagName}>";
 
-        public virtual string InnerText
+        public virtual string InnerText =>
+            Content != null ? string.Join("\r\n  ", Content.Select(c => c.InnerHtml).ToList()) : string.Empty;
+
+        public HtmlContent this[string selector] 
         {
             get
             {
-                if (!_htmlTag.StartsWith("<"))
-                    return _htmlTag;
+                if (selector.StartsWith("#"))
+                    return new HtmlContent { GetElementById(selector.Remove(0, 1)) };
+                if (selector.StartsWith("."))
+                    return new HtmlContent(GetElementsByClass(selector.Remove(0, 1)));
 
-                return Content != null ? string.Join("\r\n  ", Content.Select(c => c.InnerHtml)) : string.Empty;
+                return new HtmlContent(GetElementsByTagName(selector.Remove(0, 1)));
             }
+        }
+
+        private IEnumerable<HtmlNode> GetElementsByTagName(string selector)
+        {
+            var nodes = new List<HtmlNode>();
+            if (TagName.Equals(selector, StringComparison.OrdinalIgnoreCase))
+                nodes.Add(this);
+
+            if (Content == null)
+                return nodes;
+
+            foreach (var node in Content)
+                nodes.AddRange(node[selector]);
+
+            return nodes;
+        }
+
+        private List<HtmlNode> GetElementsByClass(string selector)
+        {
+            var nodes = new List<HtmlNode>();
+            if (Attributes.ContainsKey(selector))
+                if (Attributes["class"].Split(' ').Contains(selector))
+                    nodes.Add(this);
+            
+            if (Content == null)
+                return nodes;
+
+            foreach (var node in Content)
+                nodes.AddRange(node["." + selector]);
+
+            return nodes;
         }
 
         public HtmlNode GetElementById(string id)
@@ -112,6 +149,6 @@ namespace Parsa.HtmlParser
 
 
         public override string ToString()
-            => _tagName + (!string.IsNullOrEmpty(Id) ? $" id={Id}" : "");
+            => _tagName;// + (!string.IsNullOrEmpty(Id) ? $" id={Id}" : "");
     }
 }

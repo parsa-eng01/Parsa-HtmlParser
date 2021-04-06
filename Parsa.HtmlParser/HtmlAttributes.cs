@@ -13,23 +13,21 @@ namespace Parsa.HtmlParser
         NoQoute
     }
 
-    public class HtmlAttributes
+    public class HtmlAttributes : Dictionary<string, string>
     {
-        public HtmlAttributes(string attributeStr)
+        public HtmlAttributes(string attributeStr) : base(StringComparer.OrdinalIgnoreCase)
         {
-            _attributes = GetAttributes(attributeStr);
+            if (string.IsNullOrEmpty(attributeStr))
+                return;
+
+            foreach (var attr in GetAttributes(attributeStr))
+                Add(attr.Key, attr.Value);
         }
 
-        private Dictionary<string, string> _attributes;
-
-        public string this[string attribute] 
+        public HtmlAttributes(Dictionary<string, string> attributes) : base(attributes)
         {
-            get => _attributes.ContainsKey(attribute) ? _attributes[attribute] : null;
-            set => _attributes[attribute] = value;
-        }
 
-        public bool Remove(string attribute)
-            => _attributes.Remove(attribute);
+        }
 
         private Dictionary<string, string> GetAttributes(string attributeStr)
         {
@@ -86,6 +84,6 @@ namespace Parsa.HtmlParser
 
 
         public override string ToString()
-            => string.Join(" ", _attributes.Select(a => $"{a.Key}=\"{a.Value}\""));
+            => string.Join(" ", this.Select(a => $"{a.Key}=\"{a.Value}\""));
     }
 }

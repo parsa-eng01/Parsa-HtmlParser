@@ -2,20 +2,43 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Parsa.HtmlParser
 {
-    public class HtmlDocument
+    public class HtmlDocument : HtmlNode
     {
-        public HtmlHead Head { get; set; }
-        public HtmlBody Body { get; set; }
+        public HtmlDocument(string htmlTag) : base(htmlTag)
+        {
+        }
+        public HtmlDocument():base("<html>")
+        {
 
-        public bool IsValid()
-            => Head.IsValid() && Body.IsValid();
+        }
 
-        public HtmlNode GetElementById(string id)
-            => Body.GetElementById(id);
+        public HtmlHead Head 
+        {
+            get => Content["head"]?.FirstOrDefault() as HtmlHead;
+            set
+            {
+                if (Content.Any(t => t.TagName == "head"))
+                    Content.Remove(Content.First(t => t.TagName == "head"));
+
+                Content.Add(value);
+            }
+        }
+        public HtmlBody Body 
+        {
+            get => Content["body"]?.FirstOrDefault() as HtmlBody;
+            set
+            {
+                if (Content.Any(t => t.TagName == "body"))
+                    Content.Remove(Content.First(t => t.TagName == "body"));
+
+                Content.Add(value);
+            }
+        }
 
         public override string ToString()
             => Head.Title;

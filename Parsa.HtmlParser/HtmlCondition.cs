@@ -27,5 +27,14 @@ namespace Parsa.HtmlParser
             "wbr"
         };
 
+        public static Dictionary<string, string[]> HtmlParents => new Dictionary<string, string[]>
+        {
+            {"tr", new string[]{ "table", "tbody", "thead", "tfoot" } },
+            {"td", new string[]{ "th", "tr" } },
+            {"tbody", new string[]{ "table"} },
+            {"thead", new string[]{ "table"} },
+            {"tfoot", new string[]{ "table"} },
+            {"il", new string[]{ "ol", "ul", "menu" } },
+        };
     }
 }

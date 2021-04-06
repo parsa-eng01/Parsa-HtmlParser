@@ -20,7 +20,6 @@ namespace Parsa.HtmlParser.Tools
         {
             None,
             Tag,
-            ClosedTag,
             PlainText,
         }
 
@@ -45,191 +44,105 @@ namespace Parsa.HtmlParser.Tools
             if (!IsHtmlDocument(htmlString))
                 return null;
 
-            var head = ParseHead(htmlString);
-            if (head == null)
-                return null;
-
-            var doc = new HtmlDocument();
-            doc.Head = head;
-            doc.Body = ParseBody(htmlString);
+            var doc = Parse(htmlString);
 
             return doc;
         }
 
-        private HtmlHead ParseHead(string htmlString)
-        {
-            HtmlHead head = null;
-            var readElement = ReadElement.None;
-            var htmlBuffer = string.Empty;
-            var isTitle = false;
-
-            for (; _readerPosition < htmlString.Length; _readerPosition++)
-            {
-                var chr = htmlString[_readerPosition];
-                switch (readElement)
-                {
-                    case ReadElement.None:
-                        if (IsIgnoredCharacter(chr))
-                            continue;
-                        htmlBuffer += chr.ToString();
-                        if (chr == '<')
-                            readElement = ReadElement.Tag;
-                        else
-                            readElement = ReadElement.PlainText;
-                        break;
-                    case ReadElement.Tag:
-                        if (htmlBuffer == "<" && char.IsWhiteSpace(chr))
-                            continue;
-
-                        htmlBuffer += chr.ToString();
-                        if (chr == '>')
-                        {
-                            if (htmlBuffer.ToLower().StartsWith("<head"))
-                                head = new HtmlHead();
-                            if (htmlBuffer.ToLower().StartsWith("<title"))
-                                isTitle = true;
-                            htmlBuffer = string.Empty;
-                            readElement = ReadElement.None;
-                        }
-                        if (chr == '/')
-                        {
-                            readElement = ReadElement.ClosedTag;
-                        }
-                        break;
-                    case ReadElement.ClosedTag:
-                        htmlBuffer += chr.ToString(); 
-                        if (chr == '>')
-                        {
-                            if (htmlBuffer.ToLower() == "</head>")
-                            {
-                                _readerPosition++;
-                                return head;
-                            }
-                            htmlBuffer = string.Empty;
-                            readElement = ReadElement.None;
-                        }
-                        break;
-                    case ReadElement.PlainText:
-                        htmlBuffer += chr.ToString();
-                        if (chr == '<')
-                        {
-                            if (isTitle)
-                            {
-                                isTitle = false;
-                                head.Title = htmlBuffer.Remove(htmlBuffer.Length - 1);
-                            }
-                            htmlBuffer = "<";
-                            readElement = ReadElement.Tag;
-                        }
-                        break;
-                }
-            }
-
-            return head;
-        }
-
-        private HtmlBody ParseBody(string htmlString)
+        private HtmlDocument Parse(string htmlString)
         {
             var readElement = ReadElement.None;
             var htmlBuffer = string.Empty;
+            var index = _readerPosition;
             var openTags = new List<HtmlNode>();
 
             for (; _readerPosition < htmlString.Length; _readerPosition++)
             {
                 var chr = htmlString[_readerPosition];
-                switch (readElement)
+                if (readElement == ReadElement.None)
                 {
-                    case ReadElement.None:
-                        if (IsIgnoredCharacter(chr))
-                            continue;
-                        htmlBuffer += chr.ToString();
-                        if (chr == '<')
-                            readElement = ReadElement.Tag;
-                        else
-                            readElement = ReadElement.PlainText;
-                        break;
-                    case ReadElement.Tag:
-                        if (htmlBuffer == "<" && char.IsWhiteSpace(chr))
-                            continue;
-
-                        htmlBuffer += chr.ToString();
-                        if (chr == '>')
-                        {
-                            var node = new HtmlNode(htmlBuffer);
-                            node.IsClosed = HtmlCondition.EmptyTags.Any(e => e == node.TagName);
-                            if (node.TagName == "body")
-                                openTags.Add(new HtmlBody(htmlBuffer));
-                            else if (htmlBuffer.StartsWith("<!--"))
-                                openTags.LastOrDefault()?.Content.Add(new Comment(htmlBuffer));
-                            else
-                            {
-                                AddToParentContent(openTags, node);
-                                if (!node.IsClosed)
-                                    openTags.Add(node);
-                            }
-                            htmlBuffer = string.Empty;
-                            readElement = ReadElement.None;
-                        }
-                        if (chr == '/')
-                            readElement = ReadElement.ClosedTag;
-                        break;
-                    case ReadElement.ClosedTag:
-                        htmlBuffer += chr.ToString();
-                        if (chr == '>')
-                        {
-                            var tagName = htmlBuffer.Replace("</", "").Replace(">", "");
-                            var node = openTags.Last(t => t.TagName == tagName && !t.IsClosed);
-                            node.IsClosed = true;
-                            CheckUnclosedTags(openTags);
-
-                            if (node is HtmlBody)
-                                return node as HtmlBody;
-                            htmlBuffer = string.Empty;
-                            readElement = ReadElement.None;
-                        }
-                        break;
-                    case ReadElement.PlainText:
-                        htmlBuffer += chr.ToString();
-                        if (chr == '<')
-                        {
-                            var node = new PlainText(htmlBuffer.Remove(htmlBuffer.Length - 1));
-                            openTags.Last().Content.Add(node);
-                            htmlBuffer = "<";
-                            readElement = ReadElement.Tag;
-                        }
-                        break;
+                    if (IsIgnoredCharacter(chr))
+                    {
+                        index++;
+                        continue;
+                    }
+                    if (chr == '<')
+                        readElement = ReadElement.Tag;
+                    else
+                        readElement = ReadElement.PlainText;
                 }
-                if (openTags.FirstOrDefault(t => t is HtmlBody)?.IsClosed == true)
-                    break;
+                else if (readElement == ReadElement.Tag && chr == '>')
+                {
+                    htmlBuffer = "<";
+                    for (int i = index + 1; i <= _readerPosition; i++)
+                    {
+                        if (htmlBuffer.Length == 1 && char.IsWhiteSpace(chr))
+                            continue;
+                        htmlBuffer += htmlString[i];
+                    }
+                    
+
+                    if (htmlBuffer.StartsWith("</"))
+                    {
+                        var tagName = htmlBuffer.Remove(htmlBuffer.Length - 1).Remove(0, 2);
+                        var closedNode = openTags.Last(t => t.TagName == tagName);
+                        closedNode.IsClosed = true;
+                        CheckUnclosedTags(openTags);
+
+                        if (closedNode is HtmlDocument)
+                            return closedNode as HtmlDocument;
+
+                        index = _readerPosition + 1;
+                        readElement = ReadElement.None;
+
+                        continue;
+                    }
+                    var node = new HtmlNode(htmlBuffer);
+                    node.IsClosed = HtmlCondition.EmptyTags.Any(e => e == node.TagName);
+                    if (node.TagName == "html")
+                        node = new HtmlDocument(htmlBuffer);
+                    else if (node.TagName == "head")
+                        node = new HtmlHead(htmlBuffer);
+                    else if (node.TagName == "body")
+                        node = new HtmlBody(htmlBuffer);
+                    else if (htmlBuffer.StartsWith("<!--"))
+                        node = new Comment(htmlBuffer);
+
+                    AddToParentContent(openTags, node);
+                    if (!node.IsClosed)
+                        openTags.Add(node);
+
+                    index = _readerPosition + 1;
+                    readElement = ReadElement.None;
+
+                }
+                else if(readElement == ReadElement.PlainText && chr == '<')
+                {
+                    htmlBuffer = htmlString.Substring(index + 1, _readerPosition - index - 1).Trim();
+                    var node = new PlainText(htmlBuffer);
+                    openTags.Last().Content.Add(node);
+
+                    readElement = ReadElement.Tag;
+                    index = _readerPosition;
+                }
+
             }
 
-            return openTags.First(t => t is HtmlBody) as HtmlBody;
+            return openTags.First() as HtmlDocument;
         }
 
         private void AddToParentContent(List<HtmlNode> openTags, HtmlNode node)
         {
-            var lastNode = openTags.LastOrDefault();
-            if (lastNode == null)
+            if (!openTags.Any())
                 return;
 
-            var parents = new string[] { };
-            if (node.TagName == "tr")
-                parents = new string[] { "table", "tbody", "thead", "tfoot" };
-
-            if (node.TagName == "td")
-                parents = new string[] { "tr", "th" };
-
-            if (new string[] { "tbody", "thead", "tfoot" }.Any(t => t == node.TagName))
-                parents = new string[] { "table" };
-
-            if (node.TagName == "il")
-                parents = new string[] { "ol", "ul", "menu" };
-
-            if (!parents.Any())
+            if (!HtmlCondition.HtmlParents.ContainsKey(node.TagName))
             {
-                lastNode.Content.Add(node);
+                openTags.LastOrDefault().Content.Add(node);
                 return;
             }
+
+            var parents = HtmlCondition.HtmlParents[node.TagName];
 
             for (int i = openTags.Count - 1; i > -1; i--)
             {
@@ -241,12 +154,12 @@ namespace Parsa.HtmlParser.Tools
             }
         }
 
-        private List<HtmlNode> CheckUnclosedTags(List<HtmlNode> openTags)
+        private void CheckUnclosedTags(List<HtmlNode> openTags)
         {
             if (openTags.LastOrDefault()?.IsClosed != false)
             {
                 openTags.Remove(openTags.Last());
-                return openTags;
+                return;
             }
 
             var closedNode = openTags.Last(t => t.IsClosed);
@@ -258,8 +171,6 @@ namespace Parsa.HtmlParser.Tools
             }
             var index = openTags.IndexOf(closedNode);
             openTags.RemoveRange(index, openTags.Count - index);
-
-            return openTags;
         }
 
         private bool IsHtmlDocument(string htmlString)

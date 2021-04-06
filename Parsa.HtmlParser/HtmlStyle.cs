@@ -5,11 +5,10 @@ using System.Text;
 
 namespace Parsa.HtmlParser
 {
-    public class HtmlStyle
+    public class HtmlStyle : Dictionary<string, string>
     {
-        public HtmlStyle(string style)
+        public HtmlStyle(string style) : base(StringComparer.OrdinalIgnoreCase)
         {
-            _style = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             if (string.IsNullOrEmpty(style))
                 return;
 
@@ -18,39 +17,12 @@ namespace Parsa.HtmlParser
                 .ForEach(s =>
                 {
                     if (!string.IsNullOrEmpty(s))
-                        _style[s.Split(':')[0].Trim()] = s.Split(':')[1].Trim();
+                        base[s.Split(':')[0].Trim()] = s.Split(':')[1].Trim();
                 });
         }
 
-        private Dictionary<string, string> _style;
-
-        public string this[string element]
-        {
-            get
-            {
-                if (_style == null)
-                    return null;
-                if (string.IsNullOrEmpty(element))
-                    return null;
-                if (!_style.ContainsKey(element))
-                    return null;
-
-                return _style[element];
-            }
-            set
-            {
-                if (_style == null)
-                    _style = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-                _style[element] = value;
-            }
-        }
-
-        public bool Remove(string element)
-            => _style.Remove(element);
-
 
         public override string ToString()
-            => _style.Any() ? string.Join("; ", _style.Select(s => $"{s.Key}:{s.Value}")) : "";
+            => this.Any() ? string.Join("; ", this.Select(s => $"{s.Key}:{s.Value}")) : "";
     }
 }

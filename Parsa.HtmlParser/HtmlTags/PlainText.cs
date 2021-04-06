@@ -7,9 +7,10 @@ namespace HtmlParser.HtmlTags
 {
     public class PlainText : HtmlNode
     {
-        public PlainText(string htmlTag) : base(htmlTag)
+        public PlainText(string htmlTag) : base(null)
         {
             _tagName = "Plain Text";
+            _htmlTag = htmlTag; 
             IsClosed = true;
         }
 

@@ -1,5 +1,6 @@
 using Parsa.HtmlParser;
 using Parsa.HtmlParser.Extensions;
+using Parsa.HtmlParser.Tools;
 using System;
 using System.IO;
 using System.Linq;
@@ -16,15 +17,6 @@ namespace HtmlParserTest
         };
 
         [Fact]
-        public void LoadFromFile1()
-        {
-            var doc = new HtmlDocument();
-            doc.LoadFromFile(HtmlFiles.First());
-
-            Assert.True(doc.Body.Content[0].Content.Count == 8);
-        }
-
-        [Fact]
         public void LoadFromFile1x()
         {
             var doc = new HtmlAgilityPack.HtmlDocument();
@@ -34,12 +26,23 @@ namespace HtmlParserTest
         }
 
         [Fact]
+        public void LoadFromFile1()
+        {
+            //var doc = new HtmlDocument();
+            //doc.LoadFromFile(HtmlFiles.First());
+            var reader = new HtmlReader(HtmlFiles.First());
+            var doc = reader.Read();
+
+            Assert.True(doc.Content[0].Content.Count == 8);
+        }
+
+        [Fact]
         public void LoadFromFile2()
         {
-            var doc = new HtmlDocument();
-            doc.LoadFromFile(HtmlFiles.Last());
+            var reader = new HtmlReader(HtmlFiles.Last());
+            var doc = reader.Read();
 
-            Assert.True(doc.Body.Content.Count > 0);
+            Assert.True(doc.Content[0].Content.Count == 8);
         }
 
 

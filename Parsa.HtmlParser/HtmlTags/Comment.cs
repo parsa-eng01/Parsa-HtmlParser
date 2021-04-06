@@ -9,7 +9,7 @@ namespace Parsa.HtmlParser.HtmlTags
 {
     public class Comment : HtmlNode
     {
-        public Comment(string htmlTag) : base(string.Empty)
+        public Comment(string htmlTag) : base(null)
         {
             _tagName = "comment";
             _htmlTag = htmlTag.Replace("<!--","").Replace("-->","").Trim();
