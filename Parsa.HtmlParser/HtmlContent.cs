@@ -18,44 +18,88 @@ namespace Parsa.HtmlParser
 
         }
 
-        public HtmlContent this[string selector] 
+
+        public string Id 
+        {
+            get => Count == 1 ? this[0].Id : null;
+            set { if (Count == 1) this[0].Id = value; }
+        }
+
+        public string TagName => Count == 1 ? this[0].TagName : null;
+
+        public string InnerHtml => string.Join("\r\n", this.Select(n => n.InnerHtml));
+
+        public string InnerText => Count == 1 ? this[0].InnerText : null;
+
+        public HtmlContent Content 
+        { 
+            get => Count == 1 ? this[0].Content : null;
+            set { if (Count == 1) this[0].Content = value; }
+        }
+
+        public HtmlAttributes Attributes => Count == 1 ? this[0].Attributes : null;
+
+        public HtmlStyle Style => Count == 1 ? this[0].Style : null;
+
+        public bool IsClosed => Count == 1 ? this[0].IsClosed : false;
+
+        public HtmlContent this[string selector]
         {
             get
             {
-                if (!this.Any())
+                if (string.IsNullOrEmpty(selector))
                     return null;
+                if (selector.StartsWith("#"))
+                    return new HtmlContent { GetElementById(selector.Remove(0, 1)) };
+                if (selector.StartsWith("."))
+                    return new HtmlContent(GetElementsByClass(selector.Remove(0, 1)));
 
-                return null;
-                 //this.FirstOrDefault(n => n.TagName == tagName);
+                return new HtmlContent(GetElementsByTagName(selector));
             }
         }
 
-        HtmlContent IHtmlNode.this[string selector] => throw new NotImplementedException();
+        private IEnumerable<HtmlNode> GetElementsByTagName(string selector)
+        {
+            var nodes = new List<HtmlNode>();
+            if (Content == null)
+                return nodes;
 
-        public string Id { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            foreach (var node in Content)
+                nodes.AddRange(node[selector]);
 
-        public string TagName => throw new NotImplementedException();
+            return nodes;
+        }
 
-        public string InnerHtml => throw new NotImplementedException();
+        private List<HtmlNode> GetElementsByClass(string selector)
+        {
+            var nodes = new List<HtmlNode>();
 
-        public string InnerText => throw new NotImplementedException();
+            if (Content == null)
+                return nodes;
 
-        public HtmlContent Content { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            foreach (var node in Content)
+                nodes.AddRange(node["." + selector]);
 
-        public HtmlAttributes Attributes => throw new NotImplementedException();
-
-        public HtmlStyle Style => throw new NotImplementedException();
-
-        public bool IsClosed => throw new NotImplementedException();
-
+            return nodes;
+        }
         public HtmlNode GetElementById(string id)
         {
-            throw new NotImplementedException();
+            if (Content == null)
+                return null;
+
+            foreach (var node in Content)
+            {
+                if (node.GetElementById(id) != null)
+                    return node.GetElementById(id);
+            }
+
+            return null;
         }
 
         public bool IsValid()
         {
-            throw new NotImplementedException();
+            return !this.Any(n => !n.IsValid());
+
         }
     }
 }

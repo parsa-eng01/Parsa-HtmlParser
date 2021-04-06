@@ -32,8 +32,9 @@ namespace HtmlParserTest
             //doc.LoadFromFile(HtmlFiles.First());
             var reader = new HtmlReader(HtmlFiles.First());
             var doc = reader.Read();
+            var tables = doc["table"];
 
-            Assert.True(doc.Content[0].Content.Count == 8);
+            Assert.True(tables.Count == 2);
         }
 
         [Fact]
@@ -41,7 +42,9 @@ namespace HtmlParserTest
         {
             var reader = new HtmlReader(HtmlFiles.Last());
             var doc = reader.Read();
+            var tables = doc["table"];
 
+            Assert.True(tables.Count == 2);
             Assert.True(doc.Content[0].Content.Count == 8);
         }
 

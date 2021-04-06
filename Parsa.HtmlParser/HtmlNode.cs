@@ -33,10 +33,10 @@ namespace Parsa.HtmlParser
         protected string _htmlTag;
         protected string _tagName;
 
-        private Lazy<HtmlAttributes> _attributes;
-        private Lazy<HtmlStyle> _style;
+        private HtmlAttributes _attributes;
+        private HtmlStyle _style;
 
-        public string Id
+        public string Id 
         {
             get => Attributes.ContainsKey("id") ? Attributes["id"] : null;
             set => Attributes["id"] = value;
@@ -45,16 +45,10 @@ namespace Parsa.HtmlParser
         public bool IsClosed { get; set; }
         public HtmlContent Content { get; set; }
         public HtmlAttributes Attributes =>
-            _attributes?.Value ??
-            (_attributes = new Lazy<HtmlAttributes>(() =>
-            {
-                return new HtmlAttributes(_htmlTag.Remove(0, _tagName.Length + 1).Replace(">", "").Trim());
-            })).Value;
+            _attributes ??
+            (_attributes = new HtmlAttributes(_htmlTag.Remove(0, _tagName.Length + 1).Replace(">", "").Trim()));
         public HtmlStyle Style =>
-            _style?.Value ?? (_style = new Lazy<HtmlStyle>(() =>
-            {
-                return new HtmlStyle(Attributes.ContainsKey("style") ? Attributes["style"] : null);
-            })).Value;
+            _style ?? (_style = new HtmlStyle(Attributes.ContainsKey("style") ? Attributes["style"] : null));
 
         public virtual string InnerHtml =>
             HtmlCondition.EmptyTags.Any(t => t == _tagName) ? Build() : $"{Build()}\r\n  {InnerText}\r\n</{_tagName}>";
@@ -66,12 +60,14 @@ namespace Parsa.HtmlParser
         {
             get
             {
+                if (string.IsNullOrEmpty(selector))
+                    return null;
                 if (selector.StartsWith("#"))
                     return new HtmlContent { GetElementById(selector.Remove(0, 1)) };
                 if (selector.StartsWith("."))
                     return new HtmlContent(GetElementsByClass(selector.Remove(0, 1)));
 
-                return new HtmlContent(GetElementsByTagName(selector.Remove(0, 1)));
+                return new HtmlContent(GetElementsByTagName(selector));
             }
         }
 
