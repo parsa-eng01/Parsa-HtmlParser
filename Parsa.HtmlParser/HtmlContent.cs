@@ -61,10 +61,8 @@ namespace Parsa.HtmlParser
         private IEnumerable<HtmlNode> GetElementsByTagName(string selector)
         {
             var nodes = new List<HtmlNode>();
-            if (Content == null)
-                return nodes;
 
-            foreach (var node in Content)
+            foreach (var node in this)
                 nodes.AddRange(node[selector]);
 
             return nodes;
@@ -74,20 +72,14 @@ namespace Parsa.HtmlParser
         {
             var nodes = new List<HtmlNode>();
 
-            if (Content == null)
-                return nodes;
-
-            foreach (var node in Content)
+            foreach (var node in this)
                 nodes.AddRange(node["." + selector]);
 
             return nodes;
         }
         public HtmlNode GetElementById(string id)
         {
-            if (Content == null)
-                return null;
-
-            foreach (var node in Content)
+            foreach (var node in this)
             {
                 if (node.GetElementById(id) != null)
                     return node.GetElementById(id);

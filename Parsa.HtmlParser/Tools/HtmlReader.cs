@@ -11,9 +11,9 @@ namespace Parsa.HtmlParser.Tools
 {
     public class HtmlReader
     {
-        public HtmlReader(string file)
+        public HtmlReader()
         {
-            _file = file;
+
         }
 
         enum ReadElement
@@ -23,24 +23,16 @@ namespace Parsa.HtmlParser.Tools
             PlainText,
         }
 
-        private string _file;
-        private int _readerPosition;
+        private static int _readerPosition;
 
 
-        public HtmlDocument Read()
+        public static HtmlDocument Read(string file)
         {
-            if (!File.Exists(_file))
-                return null;
-            string htmlString = null;
-            try
-            {
-                htmlString = File.ReadAllText(_file, Encoding.UTF8);
-            }
-            catch { }
+            string htmlString = File.ReadAllText(file, Encoding.UTF8);
 
             if (string.IsNullOrEmpty(htmlString))
                 return null;
-
+            _readerPosition = 0;
             if (!IsHtmlDocument(htmlString))
                 return null;
 
@@ -49,7 +41,7 @@ namespace Parsa.HtmlParser.Tools
             return doc;
         }
 
-        private HtmlDocument Parse(string htmlString)
+        public static HtmlDocument Parse(string htmlString)
         {
             var readElement = ReadElement.None;
             var htmlBuffer = string.Empty;
@@ -118,7 +110,7 @@ namespace Parsa.HtmlParser.Tools
                 }
                 else if(readElement == ReadElement.PlainText && chr == '<')
                 {
-                    htmlBuffer = htmlString.Substring(index + 1, _readerPosition - index - 1).Trim();
+                    htmlBuffer = htmlString.Substring(index, _readerPosition - index).Trim();
                     var node = new PlainText(htmlBuffer);
                     openTags.Last().Content.Add(node);
 
@@ -128,10 +120,10 @@ namespace Parsa.HtmlParser.Tools
 
             }
 
-            return openTags.First() as HtmlDocument;
+            return openTags.FirstOrDefault(n => n is HtmlDocument) as HtmlDocument;
         }
 
-        private void AddToParentContent(List<HtmlNode> openTags, HtmlNode node)
+        private static void AddToParentContent(List<HtmlNode> openTags, HtmlNode node)
         {
             if (!openTags.Any())
                 return;
@@ -154,7 +146,7 @@ namespace Parsa.HtmlParser.Tools
             }
         }
 
-        private void CheckUnclosedTags(List<HtmlNode> openTags)
+        private static void CheckUnclosedTags(List<HtmlNode> openTags)
         {
             if (openTags.LastOrDefault()?.IsClosed != false)
             {
@@ -173,7 +165,7 @@ namespace Parsa.HtmlParser.Tools
             openTags.RemoveRange(index, openTags.Count - index);
         }
 
-        private bool IsHtmlDocument(string htmlString)
+        private static bool IsHtmlDocument(string htmlString)
         {
             if (!htmlString.TrimStart().ToUpper().StartsWith("<!DOCTYPE"))
                 return false;
@@ -182,7 +174,7 @@ namespace Parsa.HtmlParser.Tools
             return true;
         }
 
-        private bool IsIgnoredCharacter(char chr)
+        private static bool IsIgnoredCharacter(char chr)
         {
             if (char.IsWhiteSpace(chr) || chr == '\r' || chr == '\n')
                 return true;

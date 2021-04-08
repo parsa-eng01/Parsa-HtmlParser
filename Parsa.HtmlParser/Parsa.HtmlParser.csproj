@@ -1,7 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net4.7.2;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net4.5;netstandard2.0</TargetFrameworks>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>HtmlParser_parsa-eng01</PackageId>
+    <Authors>parsa-eng01</Authors>
+    <Company>Parsa</Company>
+    <Product>Parsa-HtmlParser</Product>
+    <Description>it light weight and fast, easy to use, parse HTML or read HTML file</Description>
+    <RepositoryUrl>https://github.com/parsa-eng01/Parsa-HtmlParser</RepositoryUrl>
+    <PackageTags>html,htmlparser,htmlparse,parser,hugehtmlparse,hugehtmlparser</PackageTags>
+    <NeutralLanguage>en-US</NeutralLanguage>
   </PropertyGroup>
 
 </Project>

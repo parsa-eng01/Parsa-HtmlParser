@@ -19,7 +19,7 @@ namespace Parsa.HtmlParser
 
         public HtmlHead Head 
         {
-            get => Content["head"]?.FirstOrDefault() as HtmlHead;
+            get => Content.FirstOrDefault(t => t.TagName == "head") as HtmlHead;
             set
             {
                 if (Content.Any(t => t.TagName == "head"))
@@ -30,7 +30,7 @@ namespace Parsa.HtmlParser
         }
         public HtmlBody Body 
         {
-            get => Content["body"]?.FirstOrDefault() as HtmlBody;
+            get => Content.FirstOrDefault(t => t.TagName == "body") as HtmlBody;
             set
             {
                 if (Content.Any(t => t.TagName == "body"))

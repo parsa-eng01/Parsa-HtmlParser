@@ -1,4 +1,6 @@
-﻿using Parsa.HtmlParser;
+﻿using HtmlParser.HtmlTags;
+using Parsa.HtmlParser;
+using Parsa.HtmlParser.HtmlTags;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,10 +47,13 @@ namespace Parsa.HtmlParser
         public bool IsClosed { get; set; }
         public HtmlContent Content { get; set; }
         public HtmlAttributes Attributes =>
-            _attributes ??
-            (_attributes = new HtmlAttributes(_htmlTag.Remove(0, _tagName.Length + 1).Replace(">", "").Trim()));
+            _attributes ?? (_attributes = this.GetType() == typeof(PlainText) || this.GetType() == typeof(Comment) ?
+                new HtmlAttributes(string.Empty) :
+                new HtmlAttributes(_htmlTag.Remove(0, _tagName.Length + 1).Replace(">", "").Trim()));
         public HtmlStyle Style =>
-            _style ?? (_style = new HtmlStyle(Attributes.ContainsKey("style") ? Attributes["style"] : null));
+            _style ?? (_style = this.GetType() == typeof(PlainText) || this.GetType() == typeof(Comment) ? 
+                new HtmlStyle(string.Empty) :
+                new HtmlStyle(Attributes.ContainsKey("style") ? Attributes["style"] : null));
 
         public virtual string InnerHtml =>
             HtmlCondition.EmptyTags.Any(t => t == _tagName) ? Build() : $"{Build()}\r\n  {InnerText}\r\n</{_tagName}>";
@@ -89,8 +94,8 @@ namespace Parsa.HtmlParser
         private List<HtmlNode> GetElementsByClass(string selector)
         {
             var nodes = new List<HtmlNode>();
-            if (Attributes.ContainsKey(selector))
-                if (Attributes["class"].Split(' ').Contains(selector))
+            if (Attributes.ContainsKey("class"))
+                if (Attributes["class"].Split(' ').Any(c => c == selector)) 
                     nodes.Add(this);
             
             if (Content == null)
