@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Parsa.HtmlParser
 {
@@ -63,7 +61,7 @@ namespace Parsa.HtmlParser
                             attributes[name] = value;
                         name = reader.Substring(reader.LastIndexOf(' ')).Trim();
                     }
-                    else 
+                    else
                     {
                         if (!string.IsNullOrEmpty(name))
                             attributes[name] = value;

@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Parsa.HtmlParser
 {
@@ -19,7 +16,7 @@ namespace Parsa.HtmlParser
         }
 
 
-        public string Id 
+        public string Id
         {
             get => Count == 1 ? this[0].Id : null;
             set { if (Count == 1) this[0].Id = value; }
@@ -31,8 +28,8 @@ namespace Parsa.HtmlParser
 
         public string InnerText => Count == 1 ? this[0].InnerText : null;
 
-        public HtmlContent Content 
-        { 
+        public HtmlContent Content
+        {
             get => Count == 1 ? this[0].Content : null;
             set { if (Count == 1) this[0].Content = value; }
         }

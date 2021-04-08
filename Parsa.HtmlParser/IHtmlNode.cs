@@ -1,27 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Parsa.HtmlParser
+﻿namespace Parsa.HtmlParser
 {
     public interface IHtmlNode
     {
-         string Id { get; set; }
-         string TagName { get; }
-         string InnerHtml { get; }
-         string InnerText { get; }
-         HtmlContent Content { get; set; }
-         HtmlAttributes Attributes { get; }
-         HtmlStyle Style { get; }
-         bool IsClosed { get; }
+        string Id { get; set; }
+        string TagName { get; }
+        string InnerHtml { get; }
+        string InnerText { get; }
+        HtmlContent Content { get; set; }
+        HtmlAttributes Attributes { get; }
+        HtmlStyle Style { get; }
+        bool IsClosed { get; }
 
-         HtmlContent this[string selector] { get; }
+        HtmlContent this[string selector] { get; }
 
 
-         bool IsValid();
-         HtmlNode GetElementById(string id);
+        bool IsValid();
+        HtmlNode GetElementById(string id);
 
 
     }

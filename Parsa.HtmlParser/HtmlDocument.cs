@@ -1,9 +1,5 @@
 ﻿using Parsa.HtmlParser.HtmlTags;
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace Parsa.HtmlParser
 {
@@ -12,12 +8,12 @@ namespace Parsa.HtmlParser
         public HtmlDocument(string htmlTag) : base(htmlTag)
         {
         }
-        public HtmlDocument():base("<html>")
+        public HtmlDocument() : base("<html>")
         {
 
         }
 
-        public HtmlHead Head 
+        public HtmlHead Head
         {
             get => Content.FirstOrDefault(t => t.TagName == "head") as HtmlHead;
             set
@@ -28,7 +24,7 @@ namespace Parsa.HtmlParser
                 Content.Add(value);
             }
         }
-        public HtmlBody Body 
+        public HtmlBody Body
         {
             get => Content.FirstOrDefault(t => t.TagName == "body") as HtmlBody;
             set

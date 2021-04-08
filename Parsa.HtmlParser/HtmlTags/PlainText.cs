@@ -1,7 +1,4 @@
 ﻿using Parsa.HtmlParser;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace HtmlParser.HtmlTags
 {
@@ -10,7 +7,7 @@ namespace HtmlParser.HtmlTags
         public PlainText(string htmlTag) : base(null)
         {
             _tagName = "Plain Text";
-            _htmlTag = htmlTag; 
+            _htmlTag = htmlTag;
             IsClosed = true;
         }
 

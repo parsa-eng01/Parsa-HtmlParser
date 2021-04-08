@@ -1,11 +1,9 @@
-﻿using Parsa.HtmlParser.HtmlTags;
-using Parsa.HtmlParser;
-using System;
+﻿using HtmlParser.HtmlTags;
+using Parsa.HtmlParser.HtmlTags;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using HtmlParser.HtmlTags;
 
 namespace Parsa.HtmlParser.Tools
 {
@@ -72,7 +70,7 @@ namespace Parsa.HtmlParser.Tools
                             continue;
                         htmlBuffer += htmlString[i];
                     }
-                    
+
 
                     if (htmlBuffer.StartsWith("</"))
                     {
@@ -108,7 +106,7 @@ namespace Parsa.HtmlParser.Tools
                     readElement = ReadElement.None;
 
                 }
-                else if(readElement == ReadElement.PlainText && chr == '<')
+                else if (readElement == ReadElement.PlainText && chr == '<')
                 {
                     htmlBuffer = htmlString.Substring(index, _readerPosition - index).Trim();
                     var node = new PlainText(htmlBuffer);

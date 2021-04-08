@@ -1,11 +1,8 @@
 ﻿using HtmlParser.HtmlTags;
-using Parsa.HtmlParser;
 using Parsa.HtmlParser.HtmlTags;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Parsa.HtmlParser
 {
@@ -38,7 +35,7 @@ namespace Parsa.HtmlParser
         private HtmlAttributes _attributes;
         private HtmlStyle _style;
 
-        public string Id 
+        public string Id
         {
             get => Attributes.ContainsKey("id") ? Attributes["id"] : null;
             set => Attributes["id"] = value;
@@ -51,7 +48,7 @@ namespace Parsa.HtmlParser
                 new HtmlAttributes(string.Empty) :
                 new HtmlAttributes(_htmlTag.Remove(0, _tagName.Length + 1).Replace(">", "").Trim()));
         public HtmlStyle Style =>
-            _style ?? (_style = this.GetType() == typeof(PlainText) || this.GetType() == typeof(Comment) ? 
+            _style ?? (_style = this.GetType() == typeof(PlainText) || this.GetType() == typeof(Comment) ?
                 new HtmlStyle(string.Empty) :
                 new HtmlStyle(Attributes.ContainsKey("style") ? Attributes["style"] : null));
 
@@ -61,7 +58,7 @@ namespace Parsa.HtmlParser
         public virtual string InnerText =>
             Content != null ? string.Join("\r\n  ", Content.Select(c => c.InnerHtml).ToList()) : string.Empty;
 
-        public HtmlContent this[string selector] 
+        public HtmlContent this[string selector]
         {
             get
             {
@@ -95,9 +92,9 @@ namespace Parsa.HtmlParser
         {
             var nodes = new List<HtmlNode>();
             if (Attributes.ContainsKey("class"))
-                if (Attributes["class"].Split(' ').Any(c => c == selector)) 
+                if (Attributes["class"].Split(' ').Any(c => c == selector))
                     nodes.Add(this);
-            
+
             if (Content == null)
                 return nodes;
 
@@ -130,7 +127,7 @@ namespace Parsa.HtmlParser
                 return false;
             if (Content?.Any(c => !c.IsValid()) == true)
                 return false;
-                
+
             return true;
         }
 
@@ -139,7 +136,7 @@ namespace Parsa.HtmlParser
             Attributes["style"] = Style.ToString();
             if (string.IsNullOrEmpty(Attributes["style"]))
                 Attributes.Remove("style");
-            
+
             if (string.IsNullOrEmpty(Attributes.ToString()))
                 return $"<{TagName}>";
 

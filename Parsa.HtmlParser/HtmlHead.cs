@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Parsa.HtmlParser
+﻿namespace Parsa.HtmlParser
 {
     public class HtmlHead : HtmlNode
     {
