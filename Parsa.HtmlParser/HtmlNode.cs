@@ -3,6 +3,7 @@ using Parsa.HtmlParser.HtmlTags;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace Parsa.HtmlParser
 {
@@ -10,23 +11,23 @@ namespace Parsa.HtmlParser
     {
         public HtmlNode(string htmlTag)
         {
-            if (htmlTag?.StartsWith("<") != true)
+            _htmlTag = htmlTag;
+            if (_htmlTag?.StartsWith("<") != true)
                 return;
-            if (htmlTag.StartsWith("<!--"))
+            if (_htmlTag.StartsWith("<!--"))
                 return;
 
-            var tag = htmlTag
+            _tagName = htmlTag
                 .Remove(htmlTag.Length - 1)
                 .Remove(0, 1)
-                .Split(' ')[0]
-                .ToLower();
+                .TrimStart();
+            if (_tagName.Contains(" "))
+                _tagName = _tagName.Substring(0, _tagName.IndexOf(' ')).ToLower();
 
-            if (tag.Length == 0)
+            if (_tagName.Length == 0)
                 throw new ArgumentException("html tag is not valid");
 
             Content = new HtmlContent();
-            _tagName = tag;
-            _htmlTag = htmlTag;
         }
 
         protected string _htmlTag;

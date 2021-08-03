@@ -13,7 +13,7 @@ namespace HtmlParserTest
         private string[] HtmlFiles = new[]
         {
             @"D:\Projects\Parsa Public Projects\Parsa-HtmlParser\HtmlParserTest\HtmlFiles\MT4 File1.htm",
-            @"D:\Projects\Parsa Public Projects\Parsa-HtmlParser\HtmlParserTest\HtmlFiles\MT4 File2.htm"
+            @"D:\Projects\Parsa Public Projects\Parsa-HtmlParser\HtmlParserTest\HtmlFiles\MT4 File3.htm"
         };
 
         private string HtmlString = "<!DOCTYPE html>" +
