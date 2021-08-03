@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net4.0;netstandard2.0</TargetFrameworks>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Parsa-HtmlParser</PackageId>
     <Authors>parsa-eng01</Authors>
     <Title>HtmlParser</Title>
@@ -15,6 +15,11 @@
     <NeutralLanguage>en-US</NeutralLanguage>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/parsa-eng01/Parsa-HtmlParser</PackageProjectUrl>
+    <Version>1.0.1</Version>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Extensions\" />
+  </ItemGroup>
 
 </Project>
