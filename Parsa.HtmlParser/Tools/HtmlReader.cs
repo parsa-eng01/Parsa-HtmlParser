@@ -27,9 +27,9 @@ namespace Parsa.HtmlParser.Tools
 
         public static HtmlDocument Read(string file)
         {
-            string htmlString = File.ReadAllText(file, Encoding.UTF8);
+            var htmlString = File.ReadAllBytes(file);
 
-            if (string.IsNullOrEmpty(htmlString))
+            if (!htmlString.Any())
                 return null;
             _readerPosition = 0;
             if (!IsHtmlDocument(htmlString))
@@ -40,109 +40,75 @@ namespace Parsa.HtmlParser.Tools
             return doc;
         }
 
-        public static HtmlDocument Parse(string htmlString)
+        public static HtmlDocument Parse(byte[] fileBytes)
         {
             var readElement = ReadElement.None;
-            var htmlBuffer = string.Empty;
-            var index = _readerPosition;
+            var htmlBuffer = new StringBuilder();
             var openTags = new List<HtmlNode>();
+            var oooo = fileBytes.Length;
 
-            for (; _readerPosition < htmlString.Length; _readerPosition++)
+            for (; _readerPosition < fileBytes.Length; _readerPosition++)
             {
-                var chr = htmlString[_readerPosition];
-                
-                try
+                var chr = Convert.ToChar( fileBytes[_readerPosition]);
+                if (readElement == ReadElement.None)
                 {
-                    if (readElement == ReadElement.None)
+                    if (IsIgnoredCharacter(chr))
                     {
-                        if (IsIgnoredCharacter(chr))
-                        {
-                            //index++;
-                            continue;
-                        }
-                        if (chr == '<')
-                            readElement = ReadElement.Tag;
-                        else
-                            readElement = ReadElement.PlainText;
-                        htmlBuffer += chr;
+                        continue;
                     }
-                    else if (readElement == ReadElement.Tag && chr == '>')
-                    {
-                        //htmlBuffer = "<" + htmlString.Substring(index + 1, _readerPosition - index);
-                        //for (int i = index + 1; i <= _readerPosition; i++)
-                        //{
-                        //    if (htmlBuffer.Length == 1 && char.IsWhiteSpace(chr))
-                        //        continue;
-                        //    htmlBuffer += htmlString[i];
-                        //}
-
-                        htmlBuffer += chr;
-                        if (htmlBuffer.StartsWith("</"))
-                        {
-                            var tagName = htmlBuffer.Remove(htmlBuffer.Length - 1).Remove(0, 2);
-                            var closedNode = openTags.Last(t => t.TagName == tagName);
-                            closedNode.IsClosed = true;
-                            CheckUnclosedTags(openTags);
-
-                            if (closedNode is HtmlDocument)
-                                return closedNode as HtmlDocument;
-
-                            //index = _readerPosition + 1;
-                            readElement = ReadElement.None;
-                            htmlBuffer = string.Empty;
-                            continue;
-                        }
-                        var node = new HtmlNode(htmlBuffer);
-                        node.IsClosed = HtmlCondition.EmptyTags.Any(e => e == node.TagName);
-                        if (node.TagName == "html")
-                            node = new HtmlDocument(htmlBuffer);
-                        else if (node.TagName == "head")
-                            node = new HtmlHead(htmlBuffer);
-                        else if (node.TagName == "body")
-                            node = new HtmlBody(htmlBuffer);
-                        else if (htmlBuffer.StartsWith("<!--"))
-                            node = new Comment(htmlBuffer);
-
-                        AddToParentContent(openTags, node);
-                        if (!node.IsClosed)
-                            openTags.Add(node);
-
-
-                        if (_readerPosition % 10000 == 0)
-                        {
-                            GC.Collect();
-                            GC.WaitForPendingFinalizers();
-                        }
-
-                            //index = _readerPosition + 1;
-                            readElement = ReadElement.None;
-                        htmlBuffer = string.Empty;
-                    }
-                    else if (readElement == ReadElement.PlainText && chr == '<')
-                    {
-                        //htmlBuffer = htmlString.Substring(index, _readerPosition - index).Trim();
-                        //htmlBuffer = string.Empty;
-                        //for (int i = index; i < _readerPosition; i++)
-                        //    htmlBuffer += htmlString[i];
-                        //htmlBuffer += chr;
-                        var node = new PlainText(htmlBuffer);
-                        openTags.Last().Content.Add(node);
-
+                    if (chr == '<')
                         readElement = ReadElement.Tag;
-                        //index = _readerPosition;
-                        htmlBuffer = "<";
-                    }
                     else
+                        readElement = ReadElement.PlainText;
+                    htmlBuffer.Append(chr);
+                }
+                else if (readElement == ReadElement.Tag && chr == '>')
+                {
+                    htmlBuffer.Append(chr);
+                    if (htmlBuffer.ToString().StartsWith("</"))
                     {
-                        htmlBuffer += chr;
+                        var tagName = htmlBuffer.Remove(htmlBuffer.Length - 1, 1).Remove(0, 2).ToString();
+                        var closedNode = openTags.Last(t => t.TagName == tagName);
+                        closedNode.IsClosed = true;
+                        CheckUnclosedTags(openTags);
+
+                        if (closedNode is HtmlDocument)
+                            return closedNode as HtmlDocument;
+
+                        readElement = ReadElement.None;
+                        htmlBuffer = new StringBuilder();
+                        continue;
                     }
 
+                    var tag = htmlBuffer.ToString();
+                    var node = new HtmlNode(tag);
+                    node.IsClosed = HtmlCondition.EmptyTags.Any(e => e == node.TagName);
+                    if (node.TagName == "html")
+                        node = new HtmlDocument(tag);
+                    else if (node.TagName == "head")
+                        node = new HtmlHead(tag);
+                    else if (node.TagName == "body")
+                        node = new HtmlBody(tag);
+                    else if (tag.StartsWith("<!--"))
+                        node = new Comment(tag);
+
+                    AddToParentContent(openTags, node);
+                    if (!node.IsClosed)
+                        openTags.Add(node);
+
+                    readElement = ReadElement.None;
+                    htmlBuffer = new StringBuilder();
                 }
-                catch (Exception error)
+                else if (readElement == ReadElement.PlainText && chr == '<')
                 {
-                    throw new Exception($"open tags count {openTags.Count}, html buffer {htmlBuffer}," +
-                        $" reader position {_readerPosition}, index {index}, reader element {readElement}", error);
+                    var node = new PlainText(htmlBuffer.ToString());
+                    openTags.Last().Content.Add(node);
+
+                    readElement = ReadElement.Tag;
+                    htmlBuffer = new StringBuilder("<");
                 }
+                else
+                    htmlBuffer.Append(chr);
             }
 
             return openTags.FirstOrDefault(n => n is HtmlDocument) as HtmlDocument;
@@ -190,8 +156,9 @@ namespace Parsa.HtmlParser.Tools
             openTags.RemoveRange(index, openTags.Count - index);
         }
 
-        private static bool IsHtmlDocument(string htmlString)
+        private static bool IsHtmlDocument(byte[] file)
         {
+            var htmlString = Encoding.UTF8.GetString(file);
             if (!htmlString.StartsWith("<!DOCTYPE"))
                 return false;
 
