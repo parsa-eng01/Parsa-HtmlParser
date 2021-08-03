@@ -69,3 +69,6 @@ var title = doc["title"].Select(node => node.InnerText).First(); //it will be "P
 //but you can
 var bodyText = body.Select(node => node.InnerText);
 ```
+
+## License
+[MIT]()
