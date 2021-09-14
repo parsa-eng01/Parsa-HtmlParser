@@ -5,7 +5,7 @@ this is a .NET library to parse HTML documen. it created to parse big HTML docum
 
 ## How to
 
-there is `HtmlReader` to 'Read' a File and 'Parse' HTML document as `string` it will back a `HtmlDocument'.
+there is `HtmlReader` to 'Read' a File and 'Parse' HTML document as `string` it will back a `HtmlDocument`.
 
 there is an example
 ```html

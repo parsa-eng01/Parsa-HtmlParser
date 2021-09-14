@@ -45,7 +45,6 @@ namespace Parsa.HtmlParser.Tools
             var readElement = ReadElement.None;
             var htmlBuffer = new StringBuilder();
             var openTags = new List<HtmlNode>();
-            var oooo = fileBytes.Length;
 
             for (; _readerPosition < fileBytes.Length; _readerPosition++)
             {
